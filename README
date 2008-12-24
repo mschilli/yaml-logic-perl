@@ -1,0 +1,53 @@
+######################################################################
+    YAML::Logic 0.01
+######################################################################
+
+NAME
+    YAML::Logic - blah blah blah
+
+SYNOPSIS
+        use YAML::Logic;
+
+DESCRIPTION
+    *   The variable is set to "foo".
+
+            expr:
+              - '$var'
+              - foo
+
+    *   The variable is *not* set to "foo".
+
+            expr:
+              - '!$var'
+              - foo
+
+    *   The variable is *not* set to "foo" and *not* set to "bar".
+
+            expr:
+              - '!$var'
+              - foo
+              - '!$var'
+              - bar
+
+    *   The variable is set to "foo" *or* set to "bar".
+
+            expr:
+              - or
+                - '$var'
+                - foo
+                - '$var'
+                - bar
+
+    YAML::Logic blah blah blah.
+
+EXAMPLES
+      $ perl -MYAML::Logic -le 'print $foo'
+
+LEGALESE
+    Copyright 2008 by Mike Schilli, all rights reserved. This program is
+    free software, you can redistribute it and/or modify it under the same
+    terms as Perl itself.
+
+AUTHOR
+    2008, Mike Schilli <cpan@perlmeister.com>
+
