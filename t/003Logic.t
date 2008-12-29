@@ -124,6 +124,24 @@ eval_test(q{rule:
   - like: "bar"
 }, {var => "abc"}, 1, "neither of two matches");
 
+  # Both sides interpolated
+eval_test(q{rule:
+  - $var1
+  - '$var2'
+}, {var1 => "foo", var2 => "foo"}, 1, "both sides interpolated");
+
+  # Hash interpolation
+eval_test(q{rule:
+  - $var.somekey
+  - foo
+}, {var => { somekey => 'foo' }}, 1, "hash interpolation");
+
+  # Array interpolation
+eval_test(q{rule:
+  - $var.1
+  - el2
+}, {var => [ 'el1', 'el2' ] }, 1, "array interpolation");
+
 ###########################################
 sub eval_test {
 ###########################################

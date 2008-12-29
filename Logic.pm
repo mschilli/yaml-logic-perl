@@ -343,9 +343,13 @@ And to verify that the variable matches neither /^foo.*/ nor /^bar.*/, use:
 
 =for test "yaml" end
 
+Also note that "^foo.*" requires quotes in YAML.
+
 =head2 Logical OR
 
 (not yet implemented)
+
+=for test "yaml" begin
 
     rule: 
       - or
@@ -355,15 +359,128 @@ And to verify that the variable matches neither /^foo.*/ nor /^bar.*/, use:
         - $var
         - bar
 
-=head2 Logical In Set
+=for test "yaml" end
+
+=head2 Logical AND
+
+By default, YAML::Logic chains up clauses by logical ANDs, i.e.
+
+    rule:
+      - $var1
+      - foo
+      - $var2
+      - bar
+
+checks if $var1 is equal to "foo" I<and> $var2 is equal to "bar". 
+Alternatively, the "and" keyword can be used similar to the "or"
+keyword explained in the previous section:
+
+=for test "yaml" begin
+
+    rule: 
+      - and
+      -
+        - $var
+        - foo
+        - $var
+        - bar
+
+=for test "yaml" end
+
+=head2 Logical Set Operations
 
 (not yet implemented)
+
+=for test "yaml" begin
 
     rule: 
       - $var1
       -
         - element1
         - element2
+
+=for test "yaml" end
+
+=for test "yaml" begin
+
+    rule: 
+      - $var1
+      - like:
+          - element1
+          - element2
+
+=for test "yaml" end
+
+=head2 Variable Interpolation
+
+If a field starts with the '$' character (or an exclamation mark 
+for negated checks, followed by the '$' character), the value of the
+following variable is substituted for the variable name by YAML::Logic
+before running the check.
+
+So if you have
+
+    rule:
+      - $var
+      - foo
+
+and run
+
+    my $data = YAML::Load( $yaml );
+    my $rc = $logic->evaluate( $data, { var => "bar" } );
+
+then YAML::Logic will substitute C<$var> by the string "bar", and then
+run the test
+
+    ["bar", "foo"]
+
+which checks if "bar" equals "foo". Since this is false, C<evaluate> 
+returns false.
+
+Interpolation is done on every field, so
+
+    rule:
+      - $var1
+      - $var2
+
+with
+
+    my $data = YAML::Load( $yaml );
+    my $rc = $logic->evaluate( $data, { var1 => "foo", var2 => "foo" } );
+
+will test if "foo" equals "foo" and return a true value. 
+
+Note that (for now) only variables at the beginning of the string are
+interpolated, so "abc$foo" won't be.
+
+Interpolation is done by the C<Template> module, so all the magic it does
+for arrays and hashes applies:
+
+    rule:
+      - $hash.somekey
+      - foo
+
+with
+
+    my $data = YAML::Load( $yaml );
+    my $rc = $logic->evaluate( $data, { hash => { somekey => "foo" } } );
+
+will test if "foo" equals "foo" and return a true value. 
+
+Likewise,
+
+    rule:
+      - $array.1
+      - el2
+
+with
+
+    my $data = YAML::Load( $yaml );
+    my $rc = $logic->evaluate( $data, { array => [ 'el1', 'el2' ] } );
+
+will test if "el2" equals "el2" and return a true value. Check 
+C<perldoc Template> or read the O'Reilly Template Toolkit book for a more
+detailed explanation of Template's variable interpolation magic.
 
 =head1 LEGALESE
 
