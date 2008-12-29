@@ -192,9 +192,13 @@ equal to a value "foo", looks like
 (a reference to an array containing both the value of the variable and
 the value to compare it against). In YAML, this looks like
 
+=for test "yaml" begin
+
     rule: 
       - $var
       - foo
+
+=for test "yaml" end
 
 and this is exactly the syntax that YAML::Logic accepts. Several comparisons
 can be combined by lining them up in the array:
@@ -204,152 +208,79 @@ can be combined by lining them up in the array:
 returns true if $var1 is equal to "foo" I<and> $var2 is equal to "bar".
 In YAML logical AND between two comparisons is written as
 
+=for test "yaml" begin
+
     rule: 
       - $var1
       - foo
       - $var2
       - bar
 
-A logical NOT is expressed by putting an exclamation mark in front of
-the variable, so
+=for test "yaml" end
 
-    ["!$var1", "foo"]
+=head2 Other Comparators
 
-will return true if $var1 is NOT equal to "foo". The YAML notation is
+Not only equality can be tested. In addition, these Perl operators are 
+supported:
 
-    rule: 
-      - "!$var1"
-      - foo
+    eq 
+    ne 
+    lt 
+    gt 
+    < 
+    > 
+    == 
+    =~ like
 
-for this logical expression. Note that YAML requires putting a string
-starting with an exclatmation mark in quotes.
+The way to specify a different operator is to put it as key into a hash:
 
-TODO
+    $var, { $op, $value }
 
-=over 4
-
-=item *
-
-The variable is set to "foo".
+So, the previous rule comparing $var1 to "foo" can be written as
 
 =for test "yaml" begin
 
-    expr:
-      - $var
-      - foo
+    rule:
+      - $var1
+      - eq: foo
 
 =for test "yaml" end
 
-=item *
-
-The variable is not set to "foo".
+essentially running C<$var eq "foo"> in Perl. To perform a numerical
+comparison, use the C<==> operator,
 
 =for test "yaml" begin
 
-    expr:
-      - '!$var'
-      - foo
+    rule:
+      - $var1
+      - ==: foo
 
 =for test "yaml" end
 
-=item *
+which runs C<$var eq "foo"> instead.
 
-The variable is not set to "foo" and not set to "bar".
+Regular expression matching is supported as well, so to verify if $var matches
+the regular expression C</^foo/>, use
 
 =for test "yaml" begin
 
-    expr:
-      - '!$var'
-      - foo
-      - '!$var'
-      - bar
+    rule:
+      - $var1
+      - like: ^foo
 
 =for test "yaml" end
 
-=item *
-
-The variable is set to "foo" or set to "bar".
+or
 
 =for test "yaml" begin
 
-    expr:
-      - or
-      -
-        - '$var'
-        - foo
-        - '$var'
-        - bar
+    rule:
+      - $var1
+      - =~: ^foo
 
 =for test "yaml" end
 
-=item *
-
-The variable is set to "foo" and not set to "bar".
-
-=for test "yaml" begin
-
-    expr:
-        - '$var'
-        - foo
-        - '!$var'
-        - bar
-
-=for test "yaml" end
-
-=item *
-
-The variable matches the regular expression /^foo.*/
-
-=for test "yaml" begin
-
-    expr:
-        - '$var'
-        - like: "^foo.*"
-
-=for test "yaml" end
-
-=item *
-
-The variable matches both regular expressions, /^foo.*/ and /^bar.*/.
-
-=for test "yaml" begin
-
-    expr:
-        - '$var'
-        -
-          - like: "^foo.*"
-          - like: "^bar.*"
-
-=for test "yaml" end
-
-=item *
-
-The variable matches neither /^foo.*/ nor /^bar.*/.
-
-=for test "yaml" begin
-
-    expr:
-        - '!$var'
-        -
-          - like: "^foo.*"
-          - like: "^bar.*"
-
-=for test "yaml" end
-
-=item *
-
-The value of the variable is less than 5.
-
-=for test "yaml" begin
-
-    expr:
-        - '$var'
-        - lt: 5
-
-=for test "yaml" end
-
-=back
-
+Both are equivalent.
 
 Regular expressions are given without delimiters, e.g. if you want to
 match against /abc/, simply use
@@ -367,55 +298,72 @@ setting
 
 will match like C<$var =~ /abc/i>.
 
-=head1 SYNTAX
+=head2 Logical NOT
 
-=over 4
+A logical NOT is expressed by putting an exclamation mark in front of
+the variable, so
 
-=item *
+    ["!$var1", "foo"]
 
-    A: S1, S2
+will return true if $var1 is NOT equal to "foo". The YAML notation is
 
-    return S1 eq S2
+=for test "yaml" begin
 
-=item *
+    rule: 
+      - "!$var1"
+      - foo
 
-    A: !S1, S2
+=for test "yaml" end
 
-    return ! (S1 eq S2)
+for this logical expression. Note that YAML requires putting a string
+starting with an exclatmation mark in quotes.
 
-=item *
+By default, additional rules are chained up with a logical AND operator,
+so to check if a variable is not set to "foo" and not set to "bar", use:
 
-    A: S1 [S2, S3, ...]
+=for test "yaml" begin
 
-    return (S1 eq S2 or S1 eq S3);
+    expr:
+      - '!$var'
+      - foo
+      - '!$var'
+      - bar
 
-=item *
+=for test "yaml" end
 
-    A: !S1 [S2, S3, ...]
+And to verify that the variable matches neither /^foo.*/ nor /^bar.*/, use:
 
-    return ! (S1 eq S2 or S1 eq S3);
+=for test "yaml" begin
 
-=item *
+    expr:
+        - '!$var'
+        -
+          - like: "^foo.*"
+          - like: "^bar.*"
 
-    A: S1 {OP => S3}
+=for test "yaml" end
 
-    return OP(S1, S3);
+=head2 Logical OR
 
-=item *
+(not yet implemented)
 
-    A1, A2
+    rule: 
+      - or
+      -
+        - $var
+        - foo
+        - $var
+        - bar
 
-    return A1 and A2;
-    
-=item *
+=head2 Logical In Set
 
-    return OP(S1, S3);
+(not yet implemented)
 
-=back
-
-=head1 EXAMPLES
-
-  $ perl -MYAML::Logic -le 'print $foo'
+    rule: 
+      - $var1
+      -
+        - element1
+        - element2
 
 =head1 LEGALESE
 

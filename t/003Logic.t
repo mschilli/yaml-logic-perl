@@ -116,6 +116,14 @@ eval_test(q{rule:
   - bar
 }, {var => "foo"}, 1, "not with var");
 
+  # Neither match
+eval_test(q{rule:
+  - '!$var'
+  - like: "foo"
+  - '!$var'
+  - like: "bar"
+}, {var => "abc"}, 1, "neither of two matches");
+
 ###########################################
 sub eval_test {
 ###########################################
