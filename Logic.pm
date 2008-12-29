@@ -63,16 +63,21 @@ sub evaluate {
     if( ref($data) eq "ARRAY" ) {
         while( my($field, $value) = splice @$data, 0, 2 ) {
             my $res;
+            my $not = 0;
+
+            if($field =~ s/^!//) {
+                $not = 1;
+            }
 
             $field = $self->interpolate($field, $vars);
             $value = $self->interpolate($value, $vars);
 
             if(ref($value) eq "") {
-                $res = $self->evaluate_single( $field, $value, "eq" );
+                $res = $self->evaluate_single( $field, $value, "eq", $not );
             } elsif(ref($value) eq "HASH") {
                 my($op)  = keys   %$value;
                 ($value) = values %$value;
-                $res = $self->evaluate_single( $field, $value, $op );
+                $res = $self->evaluate_single( $field, $value, $op, $not );
             }
             if(!$res) {
                   # It's a boolean AND, so all it takes is one false result 
@@ -89,13 +94,7 @@ sub evaluate {
 ###########################################
 sub evaluate_single {
 ###########################################
-    my($self, $field, $value, $op) = @_;
-
-    my $not;
-
-    if($field =~ s/^!//) {
-        $not = 1;
-    }
+    my($self, $field, $value, $op, $not) = @_;
 
     $op = lc $op ;
     $op = '=~' if $op eq "like";
@@ -400,6 +399,8 @@ keyword explained in the previous section:
         - element2
 
 =for test "yaml" end
+
+(not yet implemented)
 
 =for test "yaml" begin
 

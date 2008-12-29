@@ -114,7 +114,7 @@ eval_test(q{rule:
 eval_test(q{rule:
   - '!$var'
   - bar
-}, {var => "foo"}, 1, "not with var");
+}, {var => "bar"}, 0, "not with var");
 
   # Neither match
 eval_test(q{rule:
