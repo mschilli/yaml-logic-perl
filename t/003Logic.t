@@ -42,6 +42,41 @@ eval_test('rule:
   - $var2
 ', { var1 => "foo", var2 => "foo" }, 1);
 
+  # op: eq
+eval_test('rule:
+  - foo
+  - eq: bar
+', {}, 0);
+
+  # op: ne
+eval_test('rule:
+  - foo
+  - ne: bar
+', {}, 1);
+
+  # op: lt
+eval_test('rule:
+  - abc
+  - lt: def
+', {}, 1);
+
+  # op: gt
+eval_test('rule:
+  - abc
+  - gt: def
+', {}, 0);
+
+  # op: gt
+eval_test('rule:
+  - 123
+  - gt: 456
+', {}, 0);
+
+  # op: gt
+eval_test('rule:
+  - 456
+  - gt: 123
+', {}, 1);
 
 ###########################################
 sub eval_test {
