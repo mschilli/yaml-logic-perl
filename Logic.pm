@@ -91,6 +91,12 @@ sub evaluate_single {
 ###########################################
     my($self, $field, $value, $op) = @_;
 
+    my $not;
+
+    if($field =~ s/^!//) {
+        $not = 1;
+    }
+
     $op = lc $op ;
     $op = '=~' if $op eq "like";
 
@@ -107,7 +113,8 @@ sub evaluate_single {
         #DEBUG "Match against (before): $value";
         $value = qr($value);
         DEBUG "Match against: $value";
-        return $field =~ $value;
+        my $res = ($field =~ $value);
+        return ($not ? (!$res) : $res);
     }
 
     $value = '"' . esc($value, '"') . '"';
@@ -117,7 +124,7 @@ sub evaluate_single {
     if($@) {
         LOGDIE "$@";
     }
-    return $res;
+    return ($not ? (!$res) : $res);
 }
 
 ###############################################
@@ -155,11 +162,69 @@ YAML::Logic - Simple boolean logic in YAML
       - foo
     };
 
-    if( YAML::Logic::eval( $data->{expr}, { var => "foo" }) ) {
+    if( YAML::Logic::evaluate( $data->{expr}, { var => "foo" }) ) {
         print "True!\n";
     }
 
 =head1 DESCRIPTION
+
+YAML::Logic allows users to define simple boolean logic in a 
+configuration file, albeit without permitting arbitrary code.
+
+While Perl code can be controlled with the C<Safe> module, C<Safe> can't 
+prevent the user from defining infinite loops, exhausting all available 
+memory or crashing the interpreter by exploiting well-known perl bugs.
+
+YAML::Logic isn't perfect in this regard either, but it makes it reasonably 
+hard to define harmful code.
+
+The syntax for the boolean logic within a YAML file has been inspired by 
+John Siracusa's C<Rose::DB::Object::QueryBuilder> module, which provides 
+data structures to defined logic that is then transformed into SQL. 
+YAML::Logic takes the data structure instead and transforms it into Perl
+code.
+
+For example, the data structure to check whether a variable C<$var> is
+equal to a value "foo", looks like
+
+    [$var, "foo"]
+
+(a reference to an array containing both the value of the variable and
+the value to compare it against). In YAML, this looks like
+
+    rule: 
+      - $var
+      - foo
+
+and this is exactly the syntax that YAML::Logic accepts. Several comparisons
+can be combined by lining them up in the array:
+
+    [$var1, "foo", $var2, "bar"]
+
+returns true if $var1 is equal to "foo" I<and> $var2 is equal to "bar".
+In YAML logical AND between two comparisons is written as
+
+    rule: 
+      - $var1
+      - foo
+      - $var2
+      - bar
+
+A logical NOT is expressed by putting an exclamation mark in front of
+the variable, so
+
+    ["!$var1", "foo"]
+
+will return true if $var1 is NOT equal to "foo". The YAML notation is
+
+    rule: 
+      - "!$var1"
+      - foo
+
+for this logical expression. Note that YAML requires putting a string
+starting with an exclatmation mark in quotes.
+
+TODO
 
 =over 4
 
@@ -285,9 +350,6 @@ The value of the variable is less than 5.
 
 =back
 
-YAML::Logic blah blah blah.
-
-http://search.cpan.org/~jsiracusa/Rose-DB-Object-0.777/lib/Rose/DB/Object/QueryBuilder.pm
 
 Regular expressions are given without delimiters, e.g. if you want to
 match against /abc/, simply use

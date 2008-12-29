@@ -104,6 +104,18 @@ eval_test(q#rule:
 
 like $@, qr/Trapped \?{ in regex/, "trap code";
 
+  # Not
+eval_test(q{rule:
+  - '!foo'
+  - bar
+}, {}, 1, "not");
+
+  # Not with variable
+eval_test(q{rule:
+  - '!$var'
+  - bar
+}, {var => "foo"}, 1, "not with var");
+
 ###########################################
 sub eval_test {
 ###########################################
