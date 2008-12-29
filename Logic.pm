@@ -169,6 +169,7 @@ YAML::Logic - Simple boolean logic in YAML
 
     my $logic = YAML::Logic->new();
 
+      ### Tests defined somewhere in a YAML file ...
     my $data = Load(q{
       # is $var equal to "foo"?
     rule:
@@ -176,6 +177,7 @@ YAML::Logic - Simple boolean logic in YAML
       - foo
     });
 
+      ### Tests performed in application code:
     if( $logic->evaluate( $data->{rule}, 
                           { var => "foo" }) ) {
         print "True!\n";
