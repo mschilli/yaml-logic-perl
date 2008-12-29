@@ -171,12 +171,12 @@ YAML::Logic - Simple boolean logic in YAML
 
     my $data = Load(q{
       # is $var equal to "foo"?
-    expr:
+    rule:
       - $var
       - foo
     });
 
-    if( $logic->evaluate( $data->{expr}, 
+    if( $logic->evaluate( $data->{rule}, 
                           { var => "foo" }) ) {
         print "True!\n";
     }
@@ -389,14 +389,14 @@ Both are equivalent.
 Regular expressions are given without delimiters, e.g. if you want to
 match against /abc/, simply use
 
-    expr:
+    rule:
       - '$var'
       - abc
 
 To add regex modifiers like C</i> or C</ms>, use the C<(?...)> syntax. The
 setting
 
-    expr:
+    rule:
       - '$var'
       - (?i)abc
 
@@ -427,7 +427,7 @@ so to check if a variable is not set to "foo" and not set to "bar", use:
 
 =for test "yaml" begin
 
-    expr:
+    rule:
       - '!$var'
       - foo
       - '!$var'
@@ -439,7 +439,7 @@ And to verify that the variable matches neither /^foo.*/ nor /^bar.*/, use:
 
 =for test "yaml" begin
 
-    expr:
+    rule:
         - '!$var'
         -
           - like: "^foo.*"
@@ -542,7 +542,7 @@ if you type in
 
     my $data = Load(q{
       # is $var equal to "foo"?
-    expr:
+    rule:
       - $var
       - foo
     });
@@ -559,7 +559,7 @@ just whitespace, before feeding it to the YAML parser:
 
     my $yaml_string = q{
           # is $var equal to "foo"?
-        expr:
+        rule:
           - $var
           - foo
     };
