@@ -48,6 +48,12 @@ eval_test('rule:
   - eq: bar
 ', {}, 0, "eq op");
 
+  # op: ==
+eval_test('rule:
+  - 5
+  - ==: 13
+', {}, 0, "== op");
+
   # op: ne
 eval_test('rule:
   - foo
@@ -90,9 +96,20 @@ eval_test('rule:
   - like: "\d+"
 ', {}, 1, "regex");
 
+  # op: regex
+eval_test('rule:
+  - 456
+  - =~: "\d+"
+', {}, 1, "regex");
+
 eval_test('rule:
   - aBc
-  - like: "(?i:abc)"
+  - like: "(?i)abc"
+', {}, 1, "regex /i");
+
+eval_test('rule:
+  - aBc
+  - like: (?i)abc
 ', {}, 1, "regex /i");
 
 eval {

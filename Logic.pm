@@ -184,28 +184,27 @@ YAML::Logic - Simple boolean logic in YAML
 =head1 DESCRIPTION
 
 YAML::Logic allows users to define simple boolean logic in a 
-configuration file, albeit without permitting arbitrary code.
+configuration file, without permitting them to run arbitrary code.
 
 While Perl code can be controlled with the C<Safe> module, C<Safe> can't 
 prevent the user from defining infinite loops, exhausting all available 
 memory or crashing the interpreter by exploiting well-known perl bugs.
-
 YAML::Logic isn't perfect in this regard either, but it makes it reasonably 
 hard to define harmful code.
 
-The syntax for the boolean logic within a YAML file has been inspired by 
+The syntax for the boolean logic within a YAML file was inspired by 
 John Siracusa's C<Rose::DB::Object::QueryBuilder> module, which provides 
-data structures to defined logic that is then transformed into SQL. 
+data structures to define logic that is then transformed into SQL. 
 YAML::Logic takes the data structure instead and transforms it into Perl
 code.
 
 For example, the data structure to check whether a variable C<$var> is
-equal to a value "foo", looks like
+equal to a value "foo", looks like this:
 
     [$var, "foo"]
 
-(a reference to an array containing both the value of the variable and
-the value to compare it against). In YAML, this looks like
+It's a reference to an array containing both the value of the variable and
+the value to compare it with. In YAML, this looks like
 
 =for test "yaml" begin
 
@@ -215,13 +214,22 @@ the value to compare it against). In YAML, this looks like
 
 =for test "yaml" end
 
-and this is exactly the syntax that YAML::Logic accepts. Several comparisons
-can be combined by lining them up in the array:
+and this is exactly the syntax that YAML::Logic accepts. Note that after
+parsing the YAML configuration above, you need to pass I<only> the 
+array ref inside the C<rule> entry to YAML::Logic's C<evaluate()> method:
+
+    $logic->evaluate( $yaml_data->{rule},  ...
+
+Passing the entire YAML data would cause an error with YAML::Logic, as
+it expects to receive an array ref.
+
+Several comparisons
+can be combined by lining them up in the array. The lineup
 
     [$var1, "foo", $var2, "bar"]
 
 returns true if $var1 is equal to "foo" I<and> $var2 is equal to "bar".
-In YAML logical AND between two comparisons is written as
+In YAML::Logic syntax, these two ANDed comparisons are written as
 
 =for test "yaml" begin
 
@@ -232,6 +240,82 @@ In YAML logical AND between two comparisons is written as
       - bar
 
 =for test "yaml" end
+
+in a YAML file.
+
+=head2 Variable Interpolation
+
+If a field starts with the '$' character, the value of the
+following variable is substituted by YAML::Logic before running the check.
+
+So if you have
+
+    rule:
+      - $var
+      - foo
+
+and run
+
+    my $data = YAML::Load( $yaml );
+    my $rc = $logic->evaluate( $data->{rule}, { var => "bar" } );
+
+then YAML::Logic will substitute C<$var> by the string "bar", and then
+run the test
+
+    ["bar", "foo"]
+
+which checks if "bar" equals "foo". Since this is false, C<evaluate> 
+returns false. Note how C<evaluate> takes a ref to a hash as its 
+second argument, which maps all variables you want to have replaced 
+to their respective values.
+
+Interpolation is done on every field, so
+
+    rule:
+      - $var1
+      - $var2
+
+with
+
+    my $data = YAML::Load( $yaml );
+    my $rc = $logic->evaluate( $data->{rule}, 
+                               { var1 => "foo", var2 => "foo" } );
+
+will test if "foo" equals "foo" and hence return a true value. 
+
+Note that (for now) only variables at the beginning of the string are
+interpolated, so "abc$foo" won't be.
+
+Interpolation is done by the C<Template> module, so all the magic it does
+for arrays and hashes applies:
+
+    rule:
+      - $hash.somekey
+      - foo
+
+with
+
+    my $data = YAML::Load( $yaml );
+    my $rc = $logic->evaluate( $data->{rule}, 
+                               { hash => { somekey => "foo" } } );
+
+will test if "foo" equals "foo" and hence return a true value. 
+
+Likewise,
+
+    rule:
+      - $array.1
+      - el2
+
+with
+
+    my $data = YAML::Load( $yaml );
+    my $rc = $logic->evaluate( $data->{rule}, 
+                               { array => [ 'el1', 'el2' ] } );
+
+will test if "el2" equals "el2" and return a true value. Check 
+C<perldoc Template> or read the O'Reilly Template Toolkit book for a more
+detailed explanation of Template's variable interpolation magic.
 
 =head2 Other Comparators
 
@@ -249,30 +333,35 @@ supported:
 
 The way to specify a different operator is to put it as key into a hash:
 
-    $var, { $op, $value }
+    [ $var, { $op, $value } ]
 
-So, the previous rule comparing $var1 to "foo" can be written as
+So, the previous rule comparing $var to "foo" can be written as
 
 =for test "yaml" begin
 
     rule:
-      - $var1
+      - $var
       - eq: foo
 
 =for test "yaml" end
 
-essentially running C<$var eq "foo"> in Perl. To perform a numerical
-comparison, use the C<==> operator,
+which is essentially running 
+
+    $var eq "foo"
+
+in Perl. To perform a numerical comparison, use the C<==> operator,
 
 =for test "yaml" begin
 
     rule:
-      - $var1
-      - ==: foo
+      - $var
+      - ==: 123
 
 =for test "yaml" end
 
-which runs C<$var eq "foo"> instead.
+which runs a test of C<$var == 123> instead.
+
+=head2 Regular Expressions
 
 Regular expression matching is supported as well, so to verify if $var matches
 the regular expression C</^foo/>, use
@@ -280,7 +369,7 @@ the regular expression C</^foo/>, use
 =for test "yaml" begin
 
     rule:
-      - $var1
+      - $var
       - like: "^foo"
 
 =for test "yaml" end
@@ -442,77 +531,6 @@ use a hash key, as explained below.
 
 =for test "yaml" end
 
-=head2 Variable Interpolation
-
-If a field starts with the '$' character (or an exclamation mark 
-for negated checks, followed by the '$' character), the value of the
-following variable is substituted for the variable name by YAML::Logic
-before running the check.
-
-So if you have
-
-    rule:
-      - $var
-      - foo
-
-and run
-
-    my $data = YAML::Load( $yaml );
-    my $rc = $logic->evaluate( $data, { var => "bar" } );
-
-then YAML::Logic will substitute C<$var> by the string "bar", and then
-run the test
-
-    ["bar", "foo"]
-
-which checks if "bar" equals "foo". Since this is false, C<evaluate> 
-returns false.
-
-Interpolation is done on every field, so
-
-    rule:
-      - $var1
-      - $var2
-
-with
-
-    my $data = YAML::Load( $yaml );
-    my $rc = $logic->evaluate( $data, { var1 => "foo", var2 => "foo" } );
-
-will test if "foo" equals "foo" and return a true value. 
-
-Note that (for now) only variables at the beginning of the string are
-interpolated, so "abc$foo" won't be.
-
-Interpolation is done by the C<Template> module, so all the magic it does
-for arrays and hashes applies:
-
-    rule:
-      - $hash.somekey
-      - foo
-
-with
-
-    my $data = YAML::Load( $yaml );
-    my $rc = $logic->evaluate( $data, { hash => { somekey => "foo" } } );
-
-will test if "foo" equals "foo" and return a true value. 
-
-Likewise,
-
-    rule:
-      - $array.1
-      - el2
-
-with
-
-    my $data = YAML::Load( $yaml );
-    my $rc = $logic->evaluate( $data, { array => [ 'el1', 'el2' ] } );
-
-will test if "el2" equals "el2" and return a true value. Check 
-C<perldoc Template> or read the O'Reilly Template Toolkit book for a more
-detailed explanation of Template's variable interpolation magic.
-
 =head1 YAML Traps
 
 The original YAML implementation has a number of nasty bugs (e.g. RT42015), 
@@ -547,6 +565,32 @@ just whitespace, before feeding it to the YAML parser:
     };
     $yaml_string =~ s/^\s+\Z//m;
     my $data = Load($yaml_string);
+
+Also, certain characters have a special meaning in YAML, so you can't write
+
+    # WRONG
+    rule:
+      - $var
+      - !blah!
+
+because YAML will parse that to
+
+    [$var, undef]
+
+within the C<rule> hash entry. Why?
+Lines starting with an exclamation mark are I<tags> in YAML. To 
+avoid getting tripped up by this, use quotes:
+
+    # CORRECT
+    rule:
+      - $var
+      - "!blah!"
+
+which correctly parses to 
+
+    [$var, "!blah!"]
+
+within the C<rule> hash entry instead.
 
 =head1 LEGALESE
 
