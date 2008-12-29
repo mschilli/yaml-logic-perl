@@ -6,8 +6,12 @@ use strict;
 use warnings;
 use Log::Log4perl qw(:easy);
 use Template;
+use Sysadm::Install qw( qquote );
+use Safe;
 
 our $VERSION = "0.01";
+our %OPS = map { $_ => 1 }
+    qw(eq ne lt gt < > == =~ like);
 
 ###########################################
 sub new {
@@ -15,8 +19,11 @@ sub new {
     my($class, %options) = @_;
 
     my $self = {
+        safe => Safe->new(),
         %options,
     };
+
+    $self->{safe}->permit();
 
     bless $self, $class;
 }
@@ -84,21 +91,45 @@ sub evaluate_single {
 ###########################################
     my($self, $field, $value, $op) = @_;
 
-    if($op eq "eq") {
-        DEBUG "Comparing $field 'eq' $value";
-        return $field eq $value;
-    } elsif($op eq "ne") {
-        DEBUG "Comparing $field 'ne' $value";
-        return $field ne $value;
-    } elsif($op eq "lt") {
-        DEBUG "Comparing $field 'lt' $value";
-        return $field lt $value;
-    } elsif($op eq "gt") {
-        DEBUG "Comparing $field 'gt' $value";
-        return $field gt $value;
+    $op = lc $op ;
+    $op = '=~' if $op eq "like";
+
+    if($op eq "=~") {
+        if($value =~ /\?\{/) {
+            LOGDIE "Trapped ?{ in regex.";
+        }
+    } else {
+        $value = '"' . esc($value, '"') . '"';
+    }
+
+    $field = '"' . esc($field, '"') . '"';
+
+    if(exists $OPS{ $op }) {
+        my $cmd = "$field $op $value";
+        DEBUG "Compare: $cmd";
+        my $res = $self->{safe}->reval($cmd);
+        if($@) {
+            LOGDIE "$@";
+        }
+        return $res;
     }
 
     LOGDIE "Unknown op: $op";
+}
+
+###############################################
+sub esc {
+###############################################
+    my($str, $metas) = @_;
+
+    $str =~ s/([\\"])/\\$1/g;
+
+    if(defined $metas) {
+        $metas =~ s/\]/\\]/g;
+        $str =~ s/([$metas])/\\$1/g;
+    }
+
+    return $str;
 }
 
 1;
