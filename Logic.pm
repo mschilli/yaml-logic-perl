@@ -57,37 +57,49 @@ sub equal {
 ###########################################
 sub evaluate {
 ###########################################
-    my($self, $data, $vars) = @_;
+    my($self, $data, $vars, $not_glob, $boolean_or) = @_;
 
     if( ref($data) eq "ARRAY" ) {
         while( my($field, $value) = splice @$data, 0, 2 ) {
             my $res;
-            my $not = 0;
+
+            my $not;
 
             if($field =~ s/^!//) {
-                $not = 1;
+                $not = !$not_glob;
             }
 
-            $field = $self->interpolate($field, $vars);
-            $value = $self->interpolate($value, $vars);
+            if($field eq "or") {
+                return $self->evaluate($value, $vars, $not, 1);
+            } elsif( $field eq "and") {
+                return $self->evaluate($value, $vars, $not);
+            } else {
+                $field = $self->interpolate($field, $vars);
+                $value = $self->interpolate($value, $vars);
 
-            if(ref($value) eq "") {
-                $res = $self->evaluate_single( $field, $value, "eq", $not );
-            } elsif(ref($value) eq "HASH") {
-                my($op)  = keys   %$value;
-                ($value) = values %$value;
-                $res = $self->evaluate_single( $field, $value, $op, $not );
-            }
-            if(!$res) {
-                  # It's a boolean AND, so all it takes is one false result 
-                return 0;
+                if(ref($value) eq "") {
+                    $res = $self->evaluate_single( $field, $value, "eq", $not );
+                } elsif(ref($value) eq "HASH") {
+                    my($op)  = keys   %$value;
+                    ($value) = values %$value;
+                    $res = $self->evaluate_single( $field, $value, $op, $not );
+                }
+                if($boolean_or and $res) {
+                    # It's a boolean OR, so all it takes is one true result 
+                    return 1;
+                } elsif(!$boolean_or and !$res) {
+                    # It's a boolean AND, so all it takes is one false result 
+                    return 0;
+                }
             }
         }
     } else {
         LOGDIE "Unknown type: $data";
     }
 
-    return 1;
+      # Return 1 if all ANDed conditions succeeded, and 0 if all
+      # ORed conditions failed.
+    return ($boolean_or ? 0 : 1);
 }
 
 ###########################################
@@ -345,7 +357,14 @@ Also note that "^foo.*" requires quotes in YAML.
 
 =head2 Logical OR
 
-(not yet implemented)
+To specify a rule that is satisfied if I<any> of a series of tests
+succeeds, use the 'or' keyword in place of a variable:
+
+    [ "or", [ $var, "foo", $var, "bar" ] ]
+
+This data structure indicates that the entire test is supposed to return
+true if either C<$var eq "foo"> or C<$var eq "bar"> holds true. It looks
+like this in YAML:
 
 =for test "yaml" begin
 
@@ -358,6 +377,10 @@ Also note that "^foo.*" requires quotes in YAML.
         - bar
 
 =for test "yaml" end
+
+Pay close attention to the indentation: After the C<- or> follows a 
+line with a dash at the same indentation level, followed by a sub-array
+which has its elements indented to the next level.
 
 =head2 Logical AND
 
@@ -384,6 +407,9 @@ keyword explained in the previous section:
         - bar
 
 =for test "yaml" end
+
+With the above, you can't have variables named "and" or "or". If you do,
+use a hash key, as explained below.
 
 =head2 Logical Set Operations
 

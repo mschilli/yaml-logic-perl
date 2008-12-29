@@ -124,6 +124,14 @@ eval_test(q{rule:
   - like: "bar"
 }, {var => "abc"}, 1, "neither of two matches");
 
+  # Neither match
+eval_test(q{rule:
+  - '!$var'
+  - like: "foo"
+  - '!$var'
+  - like: "bar"
+}, {var => "foo"}, 0, "neither of two matches, false");
+
   # Both sides interpolated
 eval_test(q{rule:
   - $var1
@@ -141,6 +149,46 @@ eval_test(q{rule:
   - $var.1
   - el2
 }, {var => [ 'el1', 'el2' ] }, 1, "array interpolation");
+
+  # Logical or
+eval_test(q{rule:
+  - or
+  -
+    - $var
+    - foo
+    - $var
+    - bar
+}, {var => "bar"}, 1, "logical or");
+
+  # Logical or
+eval_test(q{rule:
+  - or
+  -
+    - $var
+    - foo
+    - $var
+    - bar
+}, {var => "foo"}, 1, "logical or");
+
+  # Logical or
+eval_test(q{rule:
+  - or
+  -
+    - $var
+    - foo
+    - $var
+    - bar
+}, {var => "abc"}, 0, "logical or");
+
+  # Logical or
+eval_test(q{rule:
+  - or
+  -
+    - "!$var"
+    - foo
+    - $var
+    - bar
+}, {var => "abc"}, 1, "logical or");
 
 ###########################################
 sub eval_test {
