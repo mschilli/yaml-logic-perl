@@ -6,7 +6,6 @@ use strict;
 use warnings;
 use Log::Log4perl qw(:easy);
 use Template;
-use Sysadm::Install qw( qquote );
 use Safe;
 
 our $VERSION = "0.01";
