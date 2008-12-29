@@ -87,27 +87,18 @@ eval_test(q{rule:
   # op: regex
 eval_test('rule:
   - 456
-  - like: "/\d+/"
+  - like: "\d+"
 ', {}, 1, "regex");
 
 eval_test('rule:
   - aBc
-  - like: /abc/i
+  - like: "(?i:abc)"
 ', {}, 1, "regex /i");
-
-eval {
-eval_test('rule:
-  - aBc
-  - like: "/abc/i; unlink \"/tmp/foo\""
-', {}, 1, "regex code trap");
-};
-
-like $@, qr/'unlink' trapped/, "trap code";
 
 eval {
 eval_test(q#rule:
   - aBc
-  - like: "m[(?{ unlink '/tmp/foo' })]"
+  - like: "?{ unlink '/tmp/foo' }"
 #, {}, 1, "regex code trap");
 };
 

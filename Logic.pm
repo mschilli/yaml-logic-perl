@@ -94,27 +94,30 @@ sub evaluate_single {
     $op = lc $op ;
     $op = '=~' if $op eq "like";
 
-    if($op eq "=~") {
-        if($value =~ /\?\{/) {
-            LOGDIE "Trapped ?{ in regex.";
-        }
-    } else {
-        $value = '"' . esc($value, '"') . '"';
+    if(! exists $OPS{ $op }) {
+        LOGDIE "Unknown op: $op";
     }
 
     $field = '"' . esc($field, '"') . '"';
 
-    if(exists $OPS{ $op }) {
-        my $cmd = "$field $op $value";
-        DEBUG "Compare: $cmd";
-        my $res = $self->{safe}->reval($cmd);
-        if($@) {
-            LOGDIE "$@";
+    if($op eq "=~") {
+        if($value =~ /\?\{/) {
+            LOGDIE "Trapped ?{ in regex.";
         }
-        return $res;
+        #DEBUG "Match against (before): $value";
+        $value = qr($value);
+        DEBUG "Match against: $value";
+        return $field =~ $value;
     }
 
-    LOGDIE "Unknown op: $op";
+    $value = '"' . esc($value, '"') . '"';
+    my $cmd = "$field $op $value";
+    DEBUG "Compare: $cmd";
+    my $res = $self->{safe}->reval($cmd);
+    if($@) {
+        LOGDIE "$@";
+    }
+    return $res;
 }
 
 ###############################################
@@ -285,6 +288,22 @@ The value of the variable is less than 5.
 YAML::Logic blah blah blah.
 
 http://search.cpan.org/~jsiracusa/Rose-DB-Object-0.777/lib/Rose/DB/Object/QueryBuilder.pm
+
+Regular expressions are given without delimiters, e.g. if you want to
+match against /abc/, simply use
+
+    expr:
+      - '$var'
+      - abc
+
+To add regex modifiers like C</i> or C</ms>, use the C<(?...)> syntax. The
+setting
+
+    expr:
+      - '$var'
+      - (?i)abc
+
+will match like C<$var =~ /abc/i>.
 
 =head1 SYNTAX
 
