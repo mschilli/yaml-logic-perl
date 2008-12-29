@@ -60,7 +60,9 @@ sub evaluate {
     my($self, $data, $vars, $not_glob, $boolean_or) = @_;
 
     if( ref($data) eq "ARRAY" ) {
-        while( my($field, $value) = splice @$data, 0, 2 ) {
+        my @data = @$data; # make a copy, so splice() doesn't destroy 
+                           # the original.
+        while( my($field, $value) = splice @data, 0, 2 ) {
             my $res;
 
             my $not;
@@ -165,14 +167,17 @@ YAML::Logic - Simple boolean logic in YAML
     use YAML qw(Load);
     use YAML::Logic;
 
+    my $logic = YAML::Logic->new();
+
     my $data = Load(q{
       # is $var equal to "foo"?
     expr:
       - $var
       - foo
-    };
+    });
 
-    if( YAML::Logic::evaluate( $data->{expr}, { var => "foo" }) ) {
+    if( $logic->evaluate( $data->{expr}, 
+                          { var => "foo" }) ) {
         print "True!\n";
     }
 
@@ -507,6 +512,41 @@ with
 will test if "el2" equals "el2" and return a true value. Check 
 C<perldoc Template> or read the O'Reilly Template Toolkit book for a more
 detailed explanation of Template's variable interpolation magic.
+
+=head1 YAML Traps
+
+The original YAML implementation has a number of nasty bugs (e.g. RT42015), 
+so using YAML::Syck is recommended, which is a both faster and more 
+reliable parser.
+
+Also, YAML as a configuration format can be tricky at times. For example 
+if you type in
+
+    my $data = Load(q{
+      # is $var equal to "foo"?
+    expr:
+      - $var
+      - foo
+    });
+
+literally (like in the SYNOPSIS section of this document), keeping the 
+indentation intact, YAML will complain that it's not happy about the final 
+blank line, which contains whitespace characters:
+
+    Code: YAML_PARSE_ERR_NO_FINAL_NEWLINE
+
+To avoid this, either use a YAML file, in which not using unnecessary
+indentation will feel natural, make sure there's no last line containing
+just whitespace, before feeding it to the YAML parser:
+
+    my $yaml_string = q{
+          # is $var equal to "foo"?
+        expr:
+          - $var
+          - foo
+    };
+    $yaml_string =~ s/^\s+\Z//m;
+    my $data = Load($yaml_string);
 
 =head1 LEGALESE
 

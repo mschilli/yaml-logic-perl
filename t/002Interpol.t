@@ -4,7 +4,7 @@
 ######################################################################
 use warnings;
 use strict;
-use YAML qw(Load Dump);
+use YAML::Syck qw(Load Dump);
 use YAML::Logic;
 use Test::More qw(no_plan);
 use Data::Dumper;
