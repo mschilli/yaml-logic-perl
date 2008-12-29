@@ -266,7 +266,7 @@ the regular expression C</^foo/>, use
 
     rule:
       - $var1
-      - like: ^foo
+      - like: "^foo"
 
 =for test "yaml" end
 
@@ -276,7 +276,7 @@ or
 
     rule:
       - $var1
-      - =~: ^foo
+      - =~: "^foo"
 
 =for test "yaml" end
 
