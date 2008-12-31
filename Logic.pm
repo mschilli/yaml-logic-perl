@@ -67,6 +67,11 @@ sub evaluate {
 
             my $not;
 
+            if(! defined $field) {
+                LOGDIE "Rule variable not defined (value=$value)",
+                       "(maybe YAML rule: !\$var without quotes?";
+            }
+
             if($field =~ s/^!//) {
                 $not = !$not_glob;
             }
