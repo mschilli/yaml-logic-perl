@@ -512,6 +512,34 @@ keyword explained in the previous section:
 With the above, you can't have variables named "and" or "or". If you do,
 use a hash key, as explained below.
 
+=head2 Defined-ness
+
+The Template Toolkit interpolates undefined variables as empty strings.
+But using TT's virtual methods, you can test if a variable is defined
+in the template context or not. The YAML logic
+
+=for test "yaml" begin
+
+    rule: 
+      - $var1.defined
+      - 1
+
+=for test "yaml" end
+
+will return true if C<$var1> has been defined. Conversely, 
+
+=for test "yaml" begin
+
+    rule: 
+      - $var1.defined
+      - ""
+
+=for test "yaml" end
+
+will return true if the variable C<$var1> is I<not> defined. Note that
+defined returns 1 on definedness and the empty string ("") if the variable
+is not defined.
+
 =head2 Logical Set Operations
 
 (not yet implemented)

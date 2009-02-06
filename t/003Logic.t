@@ -207,6 +207,27 @@ eval_test(q{rule:
     - bar
 }, {var => "abc"}, 1, "logical or");
 
+  # Undef
+eval_test(q{rule:
+    - "$var.defined"
+    - ""
+}, { var => undef }, 1, "undef");
+
+eval_test(q{rule:
+    - "!$var.defined"
+    - 1
+}, { var => undef }, 1, "undef");
+
+eval_test(q{rule:
+    - $var.defined
+    - 1
+}, { var => 0 }, 1, "undef");
+
+eval_test(q{rule:
+    - "!$var.defined"
+    - 1
+}, { var => 0 }, 0, "undef");
+
 ###########################################
 sub eval_test {
 ###########################################
