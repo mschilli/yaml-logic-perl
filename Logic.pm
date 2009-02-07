@@ -396,16 +396,24 @@ Both are equivalent.
 Regular expressions are given without delimiters, e.g. if you want to
 match against /abc/, simply use
 
+=for test "yaml" begin
+
     rule:
       - '$var'
-      - abc
+      - like: abc
+
+=for test "yaml" end
 
 To add regex modifiers like C</i> or C</ms>, use the C<(?...)> syntax. The
 setting
 
+=for test "yaml" begin
+
     rule:
       - '$var'
-      - (?i)abc
+      - like: (?i)abc
+
+=for test "yaml" end
 
 will match like C<$var =~ /abc/i>.
 

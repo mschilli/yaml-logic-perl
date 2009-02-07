@@ -2,6 +2,7 @@
 Revision history for Perl extension YAML::Logic
 
 0.02  (not yet released)
+ TODO: Set operations
     (ms) Checking for common YAML [foo: !$var] error (quotes missing)
     (ms) Added documentation on defined-ness and test cases.
 
