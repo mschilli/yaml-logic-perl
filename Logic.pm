@@ -10,7 +10,7 @@ use Safe;
 
 our $VERSION = "0.01";
 our %OPS = map { $_ => 1 }
-    qw(eq ne lt gt < > == =~ like);
+    qw(eq ne lt gt < > <= >= == =~ like);
 
 ###########################################
 sub new {

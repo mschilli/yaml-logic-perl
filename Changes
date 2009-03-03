@@ -1,10 +1,12 @@
 ######################################################################
 Revision history for Perl extension YAML::Logic
 
-0.02  (not yet released)
  TODO: Set operations
+
+0.02  (Not yet released)
     (ms) Checking for common YAML [foo: !$var] error (quotes missing)
     (ms) Added documentation on defined-ness and test cases.
+    (ms) Added <= and >= operators
 
 0.01  2008/12/28
     (ms) Where it all began.
