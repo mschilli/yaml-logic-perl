@@ -1,9 +1,10 @@
 ######################################################################
 Revision history for Perl extension YAML::Logic
 
- TODO: Set operations
+ TODO: - set operations
 
-0.02  (Not yet released)
+0.02  (2009/03/25)
+    (ms) Interpolating everything (not only lines starting with a variable)
     (ms) Checking for common YAML [foo: !$var] error (quotes missing)
     (ms) Added documentation on defined-ness and test cases.
     (ms) Added <= and >= operators

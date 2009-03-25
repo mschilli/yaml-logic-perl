@@ -270,6 +270,21 @@ eval_test(q{rule:
     - 1
 }, { var => 0 }, 0, "undef");
 
+eval_test(q{rule:
+    - "!${var.defined}"
+    - 1
+}, { var => 0 }, 0, "undef");
+
+eval_test(q{rule:
+    - "foo$var"
+    - "bar$var"
+}, { var => 0 }, 0, "double interpolation");
+
+eval_test(q{rule:
+    - "foo$var"
+    - "foo$var"
+}, { var => 1 }, 1, "double interpolation");
+
 ###########################################
 sub eval_test {
 ###########################################

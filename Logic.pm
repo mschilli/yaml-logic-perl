@@ -8,7 +8,7 @@ use Log::Log4perl qw(:easy);
 use Template;
 use Safe;
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
 our %OPS = map { $_ => 1 }
     qw(eq ne lt gt < > <= >= == =~ like);
 
@@ -19,6 +19,7 @@ sub new {
 
     my $self = {
         safe => Safe->new(),
+        template => Template->new(),
         %options,
     };
 
@@ -32,26 +33,22 @@ sub interpolate {
 ###########################################
     my($self, $input, $vars) = @_;
 
-    return $input if $input !~ /^\$/;
+    if(ref($input) eq "HASH") {
+        my @keyvals = ();
+        for my $entry (each %$input) {
+            push @keyvals, $self->interpolate( $entry, $vars );
+        }
+        return { @keyvals };
+    }
 
     my $out;
-    my $template = Template->new();
+    $input =~ s/(?:\${([\w.]+)})/[%- $1 %]/gx;
+    $input =~ s/(?:\$([\w.]+))  /[%- $1 %]/gx;
 
-    $input =~ s/\$(\S+)/[%- $1 %]/g;
-
-    $template->process( \$input, $vars, \$out ) or
-        LOGDIE $template->error();
+    $self->{template}->process( \$input, $vars, \$out ) or
+        LOGDIE $self->{template}->error();
 
     return $out;
-}
-
-###########################################
-sub equal {
-###########################################
-    my($self, $field, $value) = @_;
-
-    $field = $self->interpolate( $field );
-    return $field eq $value;
 }
 
 ###########################################
@@ -230,30 +227,10 @@ array ref inside the C<rule> entry to YAML::Logic's C<evaluate()> method:
 Passing the entire YAML data would cause an error with YAML::Logic, as
 it expects to receive an array ref.
 
-Several comparisons
-can be combined by lining them up in the array. The lineup
-
-    [$var1, "foo", $var2, "bar"]
-
-returns true if $var1 is equal to "foo" I<and> $var2 is equal to "bar".
-In YAML::Logic syntax, these two ANDed comparisons are written as
-
-=for test "yaml" begin
-
-    rule: 
-      - $var1
-      - foo
-      - $var2
-      - bar
-
-=for test "yaml" end
-
-in a YAML file.
-
 =head2 Variable Interpolation
 
-If a field starts with the '$' character, the value of the
-following variable is substituted by YAML::Logic before running the check.
+Note that variables like C<$var> will be interpolated so that they'll
+represent their value before the evaluation starts. 
 
 So if you have
 
@@ -272,26 +249,44 @@ run the test
     ["bar", "foo"]
 
 which checks if "bar" equals "foo". Since this is false, C<evaluate> 
-returns false. Note how C<evaluate> takes a ref to a hash as its 
-second argument, which maps all variables you want to have replaced 
-to their respective values.
+returns false.
 
-Interpolation is done on every field, so
+Variable interpolation happens on both sides of the comparison, so comparing
 
-    rule:
+    rule: 
+      - $foo
+      - $bar
+
+will search for two variables, C<foo> and C<bar>, replace the placeholders
+by the variable values and then compare the two entries. 
+
+If a referenced
+variable is immediately followed by some text, you can also use Perl's
+C<${foo}> notation to reference a variable:
+
+    rule: 
+      - ${foo}text
+      - $bar
+
+Several comparisons can be combined by lining them up in the array. 
+The lineup
+
+    [$var1, "foo", $var2, "bar"]
+
+returns true if $var1 is equal to "foo" I<and> $var2 is equal to "bar".
+In YAML::Logic syntax, these two ANDed comparisons are written as
+
+=for test "yaml" begin
+
+    rule: 
       - $var1
+      - foo
       - $var2
+      - bar
 
-with
+=for test "yaml" end
 
-    my $data = YAML::Load( $yaml );
-    my $rc = $logic->evaluate( $data->{rule}, 
-                               { var1 => "foo", var2 => "foo" } );
-
-will test if "foo" equals "foo" and hence return a true value. 
-
-Note that (for now) only variables at the beginning of the string are
-interpolated, so "abc$foo" won't be.
+in a YAML file.
 
 Interpolation is done by the C<Template> module, so all the magic it does
 for arrays and hashes applies:
