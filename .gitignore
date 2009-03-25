@@ -1,0 +1,7 @@
+CVS
+Makefile
+blib
+pm_to_blib
+.gitignore
+MANIFEST.bak
+Makefile.old
