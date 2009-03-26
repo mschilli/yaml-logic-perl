@@ -154,6 +154,11 @@ eval_test('rule:
   - like: (?i)abc
 ', {}, 1, "regex /i");
 
+eval_test('rule:
+  - aBc
+  - like: "^aBc$"
+', {}, 1, "anchored match");
+
 eval {
 eval_test(q#rule:
   - aBc

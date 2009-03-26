@@ -127,7 +127,7 @@ sub evaluate_single {
         #DEBUG "Match against (before): $value";
         $value = qr($value);
         DEBUG "Matching '$field' against: $value";
-        my $res = ($field =~ $value);
+        my $res = $self->{safe}->reval("$field =~ /$value/");
         return ($not ? (!$res) : $res);
     }
 
