@@ -1,5 +1,5 @@
 ######################################################################
-    YAML::Logic 0.01
+    YAML::Logic 0.02
 ######################################################################
 
 NAME
@@ -62,25 +62,9 @@ DESCRIPTION
     Passing the entire YAML data would cause an error with YAML::Logic, as
     it expects to receive an array ref.
 
-    Several comparisons can be combined by lining them up in the array. The
-    lineup
-
-        [$var1, "foo", $var2, "bar"]
-
-    returns true if $var1 is equal to "foo" *and* $var2 is equal to "bar".
-    In YAML::Logic syntax, these two ANDed comparisons are written as
-
-        rule: 
-          - $var1
-          - foo
-          - $var2
-          - bar
-
-    in a YAML file.
-
   Variable Interpolation
-    If a field starts with the '$' character, the value of the following
-    variable is substituted by YAML::Logic before running the check.
+    Note that variables like $var will be interpolated so that they'll
+    represent their value before the evaluation starts.
 
     So if you have
 
@@ -99,26 +83,40 @@ DESCRIPTION
         ["bar", "foo"]
 
     which checks if "bar" equals "foo". Since this is false, "evaluate"
-    returns false. Note how "evaluate" takes a ref to a hash as its second
-    argument, which maps all variables you want to have replaced to their
-    respective values.
+    returns false.
 
-    Interpolation is done on every field, so
+    Variable interpolation happens on both sides of the comparison, so
+    comparing
 
-        rule:
+        rule: 
+          - $foo
+          - $bar
+
+    will search for two variables, "foo" and "bar", replace the placeholders
+    by the variable values and then compare the two entries.
+
+    If a referenced variable is immediately followed by some text, you can
+    also use Perl's "${foo}" notation to reference a variable:
+
+        rule: 
+          - ${foo}text
+          - $bar
+
+    Several comparisons can be combined by lining them up in the array. The
+    lineup
+
+        [$var1, "foo", $var2, "bar"]
+
+    returns true if $var1 is equal to "foo" *and* $var2 is equal to "bar".
+    In YAML::Logic syntax, these two ANDed comparisons are written as
+
+        rule: 
           - $var1
+          - foo
           - $var2
+          - bar
 
-    with
-
-        my $data = YAML::Load( $yaml );
-        my $rc = $logic->evaluate( $data->{rule}, 
-                                   { var1 => "foo", var2 => "foo" } );
-
-    will test if "foo" equals "foo" and hence return a true value.
-
-    Note that (for now) only variables at the beginning of the string are
-    interpolated, so "abc$foo" won't be.
+    in a YAML file.
 
     Interpolation is done by the "Template" module, so all the magic it does
     for arrays and hashes applies:
@@ -207,14 +205,14 @@ DESCRIPTION
 
         rule:
           - '$var'
-          - abc
+          - like: abc
 
     To add regex modifiers like "/i" or "/ms", use the "(?...)" syntax. The
     setting
 
         rule:
           - '$var'
-          - (?i)abc
+          - like: (?i)abc
 
     will match like "$var =~ /abc/i".
 
@@ -298,6 +296,25 @@ DESCRIPTION
 
     With the above, you can't have variables named "and" or "or". If you do,
     use a hash key, as explained below.
+
+  Defined-ness
+    The Template Toolkit interpolates undefined variables as empty strings.
+    But using TT's virtual methods, you can test if a variable is defined in
+    the template context or not. The YAML logic
+
+        rule: 
+          - $var1.defined
+          - 1
+
+    will return true if $var1 has been defined. Conversely,
+
+        rule: 
+          - $var1.defined
+          - ""
+
+    will return true if the variable $var1 is *not* defined. Note that
+    defined returns 1 on definedness and the empty string ("") if the
+    variable is not defined.
 
   Logical Set Operations
     (not yet implemented)

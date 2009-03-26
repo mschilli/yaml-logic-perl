@@ -6,3 +6,5 @@ CVS
 docs
 MANIFEST.bak
 adm/release
+.gitignore
+.git
