@@ -9,7 +9,8 @@ use YAML::Logic;
 use Test::More qw(no_plan);
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
-#Log::Log4perl->easy_init($DEBUG);
+
+#Log::Log4perl->easy_init($INFO);
 
   # Not equal
 eval_test("rule:
@@ -131,6 +132,36 @@ eval_test('rule:
   - 456
   - like: "\d+"
 ', {}, 1, "regex");
+
+  # op: slash escapes
+eval_test('rule:
+  - /foo/bar
+  - like: "/foo/bar"
+', {}, 1, "regex with / chars");
+
+  # op: slash escapes
+eval_test('rule:
+  - /foo\/bar
+  - like: "/foo\\/bar"
+', {}, 1, "regex with / chars");
+
+  # op: slash escapes
+eval_test('rule:
+  - /foo\/bar
+  - like: "/foo\\\/bar"
+', {}, 1, "regex with / chars");
+
+  # op: slash escapes
+eval_test('rule:
+  - /foo\/bar
+  - like: "/foo\\\\/bar"
+', {}, 1, "regex with / chars");
+
+  # op: slash escapes
+eval_test('rule:
+  - /foo\/bar
+  - like: "/foo\/bar"
+', {}, 1, "regex with / chars");
 
   # op: regex
 eval_test('rule:
@@ -298,5 +329,10 @@ sub eval_test {
     my $logic = YAML::Logic->new();
 
     my $data = Load $yml;
-    is( $logic->evaluate( $data->{rule}, $vars ), $expected, $descr );
+    my $res = $logic->evaluate( $data->{rule}, $vars );
+    is($res, $expected, $descr );
+
+    if( $res != $expected ) {
+        print $logic->error();
+    }
 }

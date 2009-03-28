@@ -3,6 +3,9 @@ Revision history for Perl extension YAML::Logic
 
  TODO: - set operations
 
+0.03  (2009/03/27)
+    (ms) Fixed slash escapes in regexes
+
 0.02  (2009/03/25)
     (ms) Interpolating everything (not only lines starting with a variable)
     (ms) Checking for common YAML [foo: !$var] error (quotes missing)

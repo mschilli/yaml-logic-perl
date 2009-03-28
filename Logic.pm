@@ -8,7 +8,7 @@ use Log::Log4perl qw(:easy);
 use Template;
 use Safe;
 
-our $VERSION = "0.02";
+our $VERSION = "0.03";
 our %OPS = map { $_ => 1 }
     qw(eq ne lt gt < > <= >= == =~ like);
 
@@ -20,6 +20,7 @@ sub new {
     my $self = {
         safe => Safe->new(),
         template => Template->new(),
+        error => "",
         %options,
     };
 
@@ -114,31 +115,56 @@ sub evaluate_single {
     $op = lc $op ;
     $op = '=~' if $op eq "like";
 
+    $self->error("");
+
     if(! exists $OPS{ $op }) {
         LOGDIE "Unknown op: $op";
     }
 
     $field = '"' . esc($field, '"') . '"';
+    my $cmd;
 
     if($op eq "=~") {
         if($value =~ /\?\{/) {
             LOGDIE "Trapped ?{ in regex.";
         }
-        #DEBUG "Match against (before): $value";
+        $value =~ s#(\\\\|/)#\\$1#g;
+          # If we ever get something like \\/, slap another backslash
+          # onto the "/" to mask it.
+        $value =~ s#(\\+)/# (length($1) % 2) ? "$1/" : "$1\\/"#ge;
         $value = qr($value);
-        DEBUG "Matching '$field' against: $value";
-        my $res = $self->{safe}->reval("$field =~ /$value/");
-        return ($not ? (!$res) : $res);
+        $cmd = "$field =~ /$value/";
+    } else {
+        $value = '"' . esc($value, '"') . '"';
+        $cmd = "$field $op $value";
     }
 
-    $value = '"' . esc($value, '"') . '"';
-    my $cmd = "$field $op $value";
-    DEBUG "Compare: $cmd";
+    INFO "Test: $cmd";
     my $res = $self->{safe}->reval($cmd);
+
     if($@) {
         LOGDIE "$@";
     }
+
+    if(!$res and !$not or
+        $res  and $not) {
+        $res = "" if !defined $res;
+        $self->error("Test [$cmd] returned [$res]");
+    }
+
     return ($not ? (!$res) : $res);
+}
+
+###########################################
+sub error {
+###########################################
+    my($self, $error) = @_;
+
+    if(defined $error) {
+        $self->{error} = $error;
+    }
+
+    return $self->{error};
 }
 
 ###############################################
@@ -629,6 +655,18 @@ which correctly parses to
     [$var, "!blah!"]
 
 within the C<rule> hash entry instead.
+
+=head1 ERROR HANDLING
+
+If a rule fails, the error() method can be used to obtain a detailed
+textual description on why a comparison or a regex match failed.
+
+    if( $logic->evaluate( $data->{rule}, 
+                          { var => "foo" }) ) {
+        print "True!\n";
+    } else {
+        print "Failed, reason is: ", $logic->error();
+    }
 
 =head1 LEGALESE
 
