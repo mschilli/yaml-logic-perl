@@ -142,6 +142,12 @@ eval_test('rule:
   # op: slash escapes
 eval_test('rule:
   - /foo\/bar
+  - like: "/foo\/bar"
+', {}, 1, "regex with / chars");
+
+  # op: slash escapes
+eval_test('rule:
+  - /foo\/bar
   - like: "/foo\\/bar"
 ', {}, 1, "regex with / chars");
 
