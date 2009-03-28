@@ -7,3 +7,4 @@ README
 t/001Basic.t
 t/002Interpol.t
 t/003Logic.t
+t/004Eval.t
