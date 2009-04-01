@@ -327,6 +327,26 @@ eval_test(q{rule:
     - "foo$var"
 }, { var => 1 }, 1, "double interpolation");
 
+eval_test(q{rule:
+    - "$var"
+    - like: "\\w"
+}, { var => "a\\\"" }, 1, "backslash/quote madness");
+
+eval_test(q{rule:
+    - $var
+    - like: "\\w"
+}, { var => "a\\\"" }, 1, "backslash/quote madness");
+
+eval_test(q{rule:
+    - $var
+    - like: "\\w"
+}, { var => "a" }, 1, "backslash/quote madness");
+
+eval_test(q{rule:
+    - "$var"
+    - like: "\\w"
+}, { var => "a" }, 1, "backslash/quote madness");
+
 ###########################################
 sub eval_test {
 ###########################################

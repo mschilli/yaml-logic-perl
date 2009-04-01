@@ -8,7 +8,7 @@ use Log::Log4perl qw(:easy);
 use Template;
 use Safe;
 
-our $VERSION = "0.03";
+our $VERSION = "0.04";
 our %OPS = map { $_ => 1 }
     qw(eq ne lt gt < > <= >= == =~ like);
 
@@ -35,8 +35,11 @@ sub interpolate {
     my($self, $input, $vars) = @_;
 
     if(ref($input) eq "HASH") {
+          # When working on the original, we got weird memory errors
+          # in perl5.8, so just copy the hash.
+        my %dupe = %$input;
         my @keyvals = ();
-        for my $entry (each %$input) {
+        for my $entry (each %dupe) {
             push @keyvals, $self->interpolate( $entry, $vars );
         }
         return { @keyvals };
@@ -121,7 +124,7 @@ sub evaluate_single {
         LOGDIE "Unknown op: $op";
     }
 
-    $field = '"' . esc($field, '"') . '"';
+    $field = '"' . esc($field) . '"';
     my $cmd;
 
     if($op eq "=~") {
@@ -135,7 +138,7 @@ sub evaluate_single {
         $value = qr($value);
         $cmd = "$field =~ /$value/";
     } else {
-        $value = '"' . esc($value, '"') . '"';
+        $value = '"' . esc($value) . '"';
         $cmd = "$field $op $value";
     }
 
@@ -143,7 +146,7 @@ sub evaluate_single {
     my $res = $self->{safe}->reval($cmd);
 
     if($@) {
-        LOGDIE "$@";
+        LOGDIE "Evaling [$cmd] failed: $@";
     }
 
     if(!$res and !$not or

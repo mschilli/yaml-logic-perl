@@ -1,6 +1,11 @@
 ######################################################################
 Revision history for Perl extension YAML::Logic
 
+0.04  (2009/04/01)
+    (ms) Better escaping of quotes
+    (ms) Worked around weird memory errors in perl5.8.6 by duplicating
+         hashes before interpolating their content.
+
 0.03  (2009/03/28)
     (ms) Fixed slash escapes in regexes
     (ms) Added test cases
