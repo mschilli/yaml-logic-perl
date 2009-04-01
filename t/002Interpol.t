@@ -21,6 +21,22 @@ $out = $logic->interpolate( '"${var}"', { var => "foo" } );
 is($out, "\"foo\"", 
          "simple variable interpolation with \${} notation and quotes");
 
+$out = $logic->interpolate( '"${var}${var}"', { var => "foo" } );
+is($out, "\"foofoo\"", 
+         "two \${x} variables concatenated");
+
+$out = $logic->interpolate( '"${var}abc${var}"', { var => "foo" } );
+is($out, "\"fooabcfoo\"", 
+         "two \${x} variables concatenated");
+
+$out = $logic->interpolate( '"$var$var"', { var => "foo" } );
+is($out, "\"foofoo\"", 
+         "two \$x variables concatenated");
+
+$out = $logic->interpolate( '"$var abc $var"', { var => "foo" } );
+is($out, "\"foo abc foo\"", 
+         "two \$x variables concatenated");
+
 $out = $logic->interpolate( '$varfoo', { var => "foo" } );
 is($out, "", "unknown variable");
 
