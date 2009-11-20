@@ -8,7 +8,7 @@ use Log::Log4perl qw(:easy);
 use Template;
 use Safe;
 
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 our %OPS = map { $_ => 1 }
     qw(eq ne lt gt < > <= >= == =~ like);
 
