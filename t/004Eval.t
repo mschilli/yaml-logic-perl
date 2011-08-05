@@ -28,3 +28,8 @@ ok($logic->{safe}->reval("1+1"),
 
 ok($logic->{safe}->reval("'foo' =~ /foo/"), 
     "reval allows regex matches");
+
+use utf8;
+
+ok($logic->{safe}->reval("'überfooüber' =~ /foo/"), 
+    "reval allows utf8");
