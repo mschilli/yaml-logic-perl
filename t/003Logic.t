@@ -347,6 +347,80 @@ eval_test(q{rule:
     - like: "\\w"
 }, { var => "a" }, 1, "backslash/quote madness");
 
+eval_test(q{rule:
+  - or
+  -
+    - 1
+    - 2
+    - 3
+    - 3
+}, {}, 1, "simple or");
+
+eval_test(q{rule:
+  - or
+  -
+    - 1
+    - 2
+    - 3
+    - 4
+}, {}, 0, "simple or");
+
+eval_test(q{rule:
+  - or
+  -
+    - 1
+    - 2
+    - and
+    -
+      - 4
+      - 4
+      - 5
+      - 5
+}, {}, 1, "or-and");
+
+eval_test(q{rule:
+  - or
+  -
+    - and
+    -
+      - 4
+      - 4
+      - 5
+      - 5
+    - 1
+    - 2
+}, {}, 1, "or-and");
+
+eval_test(q{rule:
+  - or
+  -
+    - and
+    -
+      - 4
+      - 4
+      - 5
+      - 6
+    - 1
+    - 1
+}, {}, 1, "or-and");
+
+eval_test(q{rule:
+  - or
+  -
+    - and
+    - 
+      - 2
+      - 3
+      - 3
+      - 4
+    - and
+    - 
+      - 2
+      - 2
+      - 3
+      - 3
+}, {}, 1, "or-and-and");
+
 ###########################################
 sub eval_test {
 ###########################################
