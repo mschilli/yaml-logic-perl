@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Log::Log4perl qw(:easy);
 use Template;
+use Data::Dumper;
 use Safe;
 
 our $VERSION = "0.05";
@@ -60,6 +61,17 @@ sub evaluate {
 ###########################################
     my($self, $data, $vars, $not_glob, $boolean_or) = @_;
 
+    $not_glob   = 0 unless defined $not_glob;
+    $boolean_or = 0 unless defined $boolean_or;
+
+    DEBUG sub { "evaluate: " . 
+                Dumper( $data ) . "\n" .
+                Dumper( $vars ) . "\n" .
+                "not_glob=$not_glob " .
+                "boolean_or=$boolean_or " .
+                ""
+          };
+
     if( ref($data) eq "ARRAY" ) {
         my @data = @$data; # make a copy, so splice() doesn't destroy 
                            # the original.
@@ -78,9 +90,9 @@ sub evaluate {
             }
 
             if($field eq "or") {
-                return $self->evaluate($value, $vars, $not, 1);
+                $res = $self->evaluate($value, $vars, $not, 1);
             } elsif( $field eq "and") {
-                return $self->evaluate($value, $vars, $not);
+                $res = $self->evaluate($value, $vars, $not);
             } else {
                 $field = $self->interpolate($field, $vars);
                 $value = $self->interpolate($value, $vars);
@@ -92,13 +104,18 @@ sub evaluate {
                     ($value) = values %$value;
                     $res = $self->evaluate_single( $field, $value, $op, $not );
                 }
-                if($boolean_or and $res) {
-                    # It's a boolean OR, so all it takes is one true result 
-                    return 1;
-                } elsif(!$boolean_or and !$res) {
-                    # It's a boolean AND, so all it takes is one false result 
-                    return 0;
-                }
+            }
+
+            if($boolean_or and $res) {
+                # It's a boolean OR, so all it takes is one true result 
+                my $rc = 1;
+                DEBUG "evaluate: rc=$rc";
+                return $rc;
+            } elsif(!$boolean_or and !$res) {
+                # It's a boolean AND, so all it takes is one false result 
+                my $rc = 0;
+                DEBUG "evaluate: rc=$rc";
+                return $rc;
             }
         }
     } else {
@@ -107,7 +124,10 @@ sub evaluate {
 
       # Return 1 if all ANDed conditions succeeded, and 0 if all
       # ORed conditions failed.
-    return ($boolean_or ? 0 : 1);
+    my $rc = 1;
+    $rc = 0 if $boolean_or;
+    DEBUG "evaluate: rc=$rc";
+    return $rc;
 }
 
 ###########################################
