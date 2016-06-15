@@ -8,3 +8,5 @@ MANIFEST.bak
 adm/release
 .gitignore
 .git
+MYMETA.json
+MYMETA.yml
