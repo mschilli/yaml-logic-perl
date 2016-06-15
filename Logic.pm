@@ -9,7 +9,7 @@ use Template;
 use Data::Dumper;
 use Safe;
 
-our $VERSION = "0.05";
+our $VERSION = "0.06";
 our %OPS = map { $_ => 1 }
     qw(eq ne lt gt < > <= >= == =~ like);
 
@@ -47,7 +47,7 @@ sub interpolate {
     }
 
     my $out;
-    $input =~ s/(?:\${([\w.]+)})/[%- $1 %]/gx;
+    $input =~ s/(?:\$\{([\w.]+)})/[%- $1 %]/gx;
     $input =~ s/(?:\$([\w.]+))  /[%- $1 %]/gx;
 
     $self->{template}->process( \$input, $vars, \$out ) or
