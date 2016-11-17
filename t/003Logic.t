@@ -203,7 +203,7 @@ eval_test(q#rule:
 #, {}, 1, "regex code trap");
 };
 
-like $@, qr/Trapped \?{ in regex/, "trap code";
+like $@, qr/Trapped \?\{ in regex/, "trap code";
 
   # Not
 eval_test(q{rule:
