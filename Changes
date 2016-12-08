@@ -1,6 +1,10 @@
 ######################################################################
 Revision history for Perl extension YAML::Logic
 
+0.07  (2016/12/07)
+    (ms) Alexandr Ciornii fixed another unescaped left curly in the
+         test suite: https://github.com/mschilli/yaml-logic-perl/pull/1
+
 0.06  (2016/06/14)
     (ms) [rt.cpan.org #115143] Fixed "Unescaped left brace" warning
          in perl 5.25, reported by Slaven Rezic.

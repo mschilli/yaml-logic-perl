@@ -9,7 +9,7 @@ use Template;
 use Data::Dumper;
 use Safe;
 
-our $VERSION = "0.06";
+our $VERSION = "0.07";
 our %OPS = map { $_ => 1 }
     qw(eq ne lt gt < > <= >= == =~ like);
 
